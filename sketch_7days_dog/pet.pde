@@ -12,10 +12,11 @@ class Pet implements IScreen {
 
   // 育成画面の表示（犬の画像とステータス）
   void display() {
-    float imgDisplayWidth = width / 3;
-    float imgDisplayHeight = height / 2;
-    float imgDisplayX = 320 - imgDisplayWidth / 2;
-    float imgDisplayY = 200 - imgDisplayHeight / 2;
+    imageMode(CORNER);
+    float imgDisplayWidth = width * 0.4;
+    float imgDisplayHeight = height * 0.4;
+    float imgDisplayX = (width - imgDisplayWidth) / 2;
+    float imgDisplayY = (height - imgDisplayHeight) / 3;
 
     image(dog[imageIndex], imgDisplayX, imgDisplayY, imgDisplayWidth, imgDisplayHeight);
 
@@ -28,21 +29,18 @@ class Pet implements IScreen {
     return false;
   }
 
-  // 「ごはん」ボタンが押されたとき
   void feed() {
-    status.feed();
+    status.chargeEnergy();
     imageIndex = 1;
   }
 
-  // 「遊ぶ」ボタンが押されたとき
   void play() {
-    status.play();
+    status.exercise();
     imageIndex = 2;
   }
 
-  // 「ねる」ボタンが押されたとき
   void sleep() {
-    status.sleep();
+    status.rest();
     imageIndex = 3;
   }
 }

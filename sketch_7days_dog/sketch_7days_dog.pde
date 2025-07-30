@@ -1,4 +1,4 @@
-interface IScreen {
+interface IScreen { //<>//
   void display(); // 画面を描画
   boolean handleClick(int mx, int my); // クリック処理（画面遷移があればtrue）
 }
@@ -7,7 +7,7 @@ GameManager gm;
 
 void setup() {
   size(640, 480);
-  PFont font = createFont("Osaka", 50); // 日本語フォント設定
+  PFont font = createFont("メイリオ", 50); // 日本語フォント設定
   textFont(font);
   gm = new GameManager(); // ゲーム管理クラス初期化
 }
@@ -21,14 +21,13 @@ void mousePressed() {
   gm.handleClick(mouseX, mouseY); // クリック処理
 }
 
-final int ACTIONS_PER_DAY = 3;
-final int TOTAL_DAYS = 7;
-final int MAX_CNT = ACTIONS_PER_DAY * TOTAL_DAYS;
-
 class GameManager {
   private IScreen currentScreen; // 現在の画面
   private Pet pet;
   private int actionCount = 0; // 時間管理用カウンタ
+  private final int ACTIONS_PER_DAY = 3;
+  private final int TOTAL_DAYS = 7;
+  private final int MAX_CNT = ACTIONS_PER_DAY * TOTAL_DAYS;
   private String[] times = {"朝", "昼", "晩"}; // 時間帯
 
   private Button feedButton, playButton, sleepButton; // 各種ボタン
@@ -39,28 +38,27 @@ class GameManager {
   GameManager() {
     currentScreen = new TitleScreen(); // 初期画面
     // 各ボタンの初期化と処理
-    feedButton = new Button(110, height - 150, 120, 40, "ごはん", () -> {
+    feedButton = new Button(width * 0.17, height * 0.7, width * 0.18, height * 0.08, "ごはん", () -> {
       if (pet != null) pet.feed();
       incrementActionCount();
     }
     );
-    playButton = new Button(260, height - 150, 120, 40, "遊ぶ", () -> {
+    playButton = new Button(width * 0.44, height * 0.7, width * 0.18, height * 0.08, "遊ぶ", () -> {
       if (pet != null) pet.play();
       incrementActionCount();
     }
     );
-    sleepButton = new Button(410, height - 150, 120, 40, "ねる", () -> {
+    sleepButton = new Button(width * 0.71, height * 0.7, width * 0.18, height * 0.08, "ねる", () -> {
       if (pet != null) pet.sleep();
       incrementActionCount();
     }
     );
 
+
     // 背景画像の読み込み
-    /*
-    bgMorning = loadImage("morning.png");
-     bgNoon = loadImage("noon.png");
-     bgNight = loadImage("night.png");
-     */
+    bgMorning = loadImage("morning.jpg");
+    bgNoon = loadImage("noon.jpg");
+    bgNight = loadImage("night.jpg");
   }
 
   void incrementActionCount() {
@@ -80,48 +78,69 @@ class GameManager {
   }
 
   void display() {
-    // ゲーム終了なら終了画面に切り替え
-    if (pet != null && isGameOver() && !(currentScreen instanceof EndScreen)) {
-      currentScreen = new EndScreen();
+    // 1) ――― 背景 ―――
+    if (currentScreen instanceof Pet) {
+      // 時間帯に応じて背景画像を選択
+      int timeIndex = actionCount % 3;
+
+      PImage selectedBg = null;
+      if (timeIndex == 0) {
+        selectedBg = bgMorning;
+      } else if (timeIndex == 1) {
+        selectedBg = bgNoon;
+      } else {
+        selectedBg = bgNight;
+      }
+
+      // 背景画像があれば表示、なければグレー
+      if (selectedBg != null) {
+        image(selectedBg, 0, 0, width, height);
+      } else {
+        background(200); // 画像読み込み失敗時
+      }
     }
 
-    currentScreen.display(); // 現在の画面を描画
-    /*
-    // 背景表示（育成画面のみ）
-     if (currentScreen instanceof Pet) {
-     int timeIndex = cnt % 3;
-     if (cnt >= 21) {
-     background(100); // 終了後はグレー
-     } else if (timeIndex == 0) {
-     image(bgMorning, 0, 0, width, height);
-     } else if (timeIndex == 1) {
-     image(bgNoon, 0, 0, width, height);
-     } else {
-     image(bgNight, 0, 0, width, height);
-     }
-     } else {
-     background(255); // それ以外の画面は白背景
-     }
-    */
+    // 2) ――― 画面本体 ―――
+    currentScreen.display();
 
-    // 育成画面の場合、ボタンと時間情報を表示
+    // 3) ――― UI (Pet 画面のみ) ―――
     if (currentScreen instanceof Pet) {
       feedButton.display();
       playButton.display();
       sleepButton.display();
 
+      float ts = height * 0.05;
+      textSize(ts);
+      float boxX = width * 0.02;
+      float boxY = height * 0.04;
+      float padding = ts * 0.5f;
+
+      float boxW = textWidth("日数: " + getDay() + "日目");
+      float boxW2 = textWidth("時間帯: " + getTime());
+      float boxWFinal = max(boxW, boxW2) + padding * 2;
+
+      float boxH = ts * 2 + padding * 2;
+
+      fill(230);
+      noStroke();
+      rect(boxX, boxY, boxWFinal, boxH, 8);
+
       fill(0);
-      textAlign(LEFT);
-      textSize(24);
-      if (!isGameOver()) {
-        text("日数: " + getDay() + "日目", 20, 40);
-        text("時間帯: " + getTime(), 20, 70);
-      } else {
-        text("1週間が終了しました！", 20, 40);
-      }
+      textAlign(LEFT, TOP);
+      textSize(ts);
+      text("日数: " + getDay() + "日目", boxX + padding, boxY + padding);
+      text("時間帯: " + getTime(), boxX + padding, boxY + padding + ts * 1.2);
+    }
+    // ゲーム終了判定 → EndScreen へ切替
+    if (pet != null && isGameOver() && !(currentScreen instanceof EndScreen) && !(currentScreen instanceof AlbumScreen)) {
+      currentScreen = new EndScreen();
     }
   }
 
+  void setCurrentScreen(IScreen screen) {
+    currentScreen = screen;
+  }
+ 
   void handleClick(int mx, int my) {
     boolean screenChangeRequested = currentScreen.handleClick(mx, my);
     // 画面遷移の処理
@@ -224,6 +243,7 @@ class SelectionScreen implements IScreen {
     textSize(height * 0.05);
     fill(0);
     text("どの子と過ごす？", width / 2, height * 0.21);
+    imageMode(CORNER);
     image(dog1[0], dog1X, dog1Y, imgW, imgH);
     image(dog2[0], dog2X, dog2Y, imgW, imgH);
 
@@ -269,15 +289,23 @@ class SelectionScreen implements IScreen {
 //終了画面
 class EndScreen implements IScreen {
   Button restartButton;
+  Button albumButton;
 
   EndScreen() {
-    float x = width / 2 - width * 0.15;
-    float y = height * 0.7;
-    float w = width * 0.3;
-    float h = height * 0.1;
+    float btnW = width * 0.3;
+    float btnH = height * 0.1;
 
-    restartButton = new Button(x, y, w, h, "もう一度遊ぶ", () -> {
+    float restartX = width / 2 - btnW / 2;
+    float restartY = height * 0.75;
+    restartButton = new Button(restartX, restartY, btnW, btnH, "もう一度遊ぶ", () -> {
       println("再スタートボタンが押されました！");
+    }
+    );
+
+    float albumX = width / 2 - btnW / 2;
+    float albumY = height * 0.6;
+    albumButton = new Button(albumX, albumY, btnW, btnH, "アルバムを見る", () -> {
+      println("アルバムボタンが押されました！");
     }
     );
   }
@@ -288,13 +316,68 @@ class EndScreen implements IScreen {
     textAlign(CENTER, CENTER);
     textSize(height * 0.06);
     text("1週間が終了しました！", width / 2, height / 3);
+    albumButton.display();
     restartButton.display();
   }
 
   boolean handleClick(int mx, int my) {
+    if (albumButton.isClicked(mx, my)) {
+      albumButton.onClick();
+      gm.setCurrentScreen(new AlbumScreen(gm.selectedDogImage)); // ←画面遷移
+      return false;
+    }
     if (restartButton.isClicked(mx, my)) {
       restartButton.onClick();
       return true;
+    }
+    return false;
+  }
+}
+
+class AlbumScreen implements IScreen {
+  PImage[] dogImages;
+  int currentIndex = 0;
+  Button nextButton;
+  Button backButton;
+
+  AlbumScreen(PImage[] dogImages) {
+    this.dogImages = dogImages;
+
+    float btnW = width * 0.2;
+    float btnH = height * 0.08;
+
+    nextButton = new Button(width * 0.65, height * 0.8, btnW, btnH, "次へ", () -> {
+      currentIndex = (currentIndex + 1) % dogImages.length;
+    }
+    );
+
+    backButton = new Button(width * 0.15, height * 0.8, btnW, btnH, "戻る", () -> {
+      gm.setCurrentScreen(new EndScreen()); // エンド画面に戻る
+    }
+    );
+  }
+
+  void display() {
+    background(255);
+    if (dogImages != null && dogImages[currentIndex] != null) {
+      imageMode(CENTER);
+      image(dogImages[currentIndex], width / 2, height / 2 - 30, width * 0.6, height * 0.5);
+    }
+
+    fill(0);
+    textAlign(CENTER, CENTER);
+    textSize(height * 0.05);
+    text("アルバム", width / 2, height * 0.1);
+
+    nextButton.display();
+    backButton.display();
+  }
+
+  boolean handleClick(int mx, int my) {
+    if (nextButton.isClicked(mx, my)) {
+      nextButton.onClick();
+    } else if (backButton.isClicked(mx, my)) {
+      backButton.onClick();
     }
     return false;
   }
