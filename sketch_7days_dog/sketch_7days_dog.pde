@@ -218,7 +218,7 @@ class SelectionScreen implements IScreen {
   SelectionScreen() {
     for (int i = 0; i < dog1.length; i++) {
       dog1[i] = loadImage("dog1_"+i+".png");
-      dog2[i] = loadImage("dog2.png");
+      dog2[i] = loadImage("dog2_"+i+".png");
     }
     // レイアウトとボタン初期化
     imgW = width * 0.3;
